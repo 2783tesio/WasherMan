@@ -50,6 +50,7 @@ const UserManager = () => {
       type: selectedCloth,
       name: clothName
     });
+    
     //setSelectedCloth(null);
     setClothName("");
     loadUser();
