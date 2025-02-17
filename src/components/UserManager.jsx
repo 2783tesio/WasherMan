@@ -16,8 +16,48 @@ const defaultClothes = [
 const UserManager = () => {
   const [user, setUser] = useState(null);
   const [userName, setUserName] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCloth, setSelectedCloth] = useState(null);
   const [clothName, setClothName] = useState("");
+  const [categorizedClothes, setCategorizedClothes] = useState({
+    Tops: [
+      { id: 1, type: "T-Shirt" },
+      { id: 2, type: "Shirt" },
+      { id: 3, type: "Sweater" },
+      { id: 4, type: "Hoodie" },
+      { id: 5, type: "Jacket" },
+      { id: 6, type: "Blazer" }
+    ],
+    Bottoms: [
+      { id: 7, type: "Jeans" },
+      { id: 8, type: "Shorts" },
+      { id: 9, type: "Trouser" },
+      { id: 10, type: "Pant" }
+    ],
+    Traditional: [
+      { id: 11, type: "Saree" },
+      { id: 12, type: "Kurta" },
+      { id: 13, type: "Lehenga" },
+      { id: 14, type: "Anarkali" },
+      { id: 15, type: "Kurti" }
+    ],
+    Accessories: [{ id: 18, type: "Scarf" }, { id: 47, type: "Towel" }],
+    Footwear: [
+      { id: 23, type: "Shoes" },
+      { id: 24, type: "Slippers" },
+      { id: 25, type: "Sandals" },
+      { id: 26, type: "Boots" }
+    ],
+    HomeLinen: [
+      { id: 48, type: "Bed Linen" },
+      { id: 51, type: "Cushion Cover" },
+      { id: 52, type: "Blanket" },
+      { id: 53, type: "Quilt" },
+      { id: 54, type: "Pillow" },
+      { id: 55, type: "Mattress" }
+    ]
+  });
+
 
   useEffect(() => {
     loadUser();
@@ -40,8 +80,8 @@ const UserManager = () => {
     loadUser();
   };
 
-  const handleAddCloth = async () => {
-    if (!user || !selectedCloth || !clothName.trim()) {
+ const handleAddCloth = async () => {
+    if (!user || !selectedCloth || !clothName.trim() || !selectedCategory) {
       alert("Please fill all fields!");
       return;
     }
@@ -50,8 +90,7 @@ const UserManager = () => {
       type: selectedCloth,
       name: clothName
     });
-    
-    //setSelectedCloth(null);
+
     setClothName("");
     loadUser();
   };
@@ -71,6 +110,10 @@ const UserManager = () => {
         ...prevUser,
         userCloth: updatedClothes
     }));
+  };
+const handleCategoryChange = e => {
+    setSelectedCategory(e.target.value);
+    setSelectedCloth("");
 };
 
 
@@ -100,15 +143,30 @@ const UserManager = () => {
         : <div className="flex flex-col space-y-3">
             <h3 className="text-lg font-medium">👕 Add Clothes</h3>
             <select
-              onChange={e => setSelectedCloth(e.target.value)}
-              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 "
+              onChange={handleCategoryChange}
+              value={selectedCategory}
+              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
             >
-              <option value="">Select Cloth Type</option>
-              {defaultClothes.map(cloth =>
-                <option key={cloth.id} value={cloth.type}>
-                  {cloth.type}
+              <option value="">Select Category</option>
+              {Object.keys(categorizedClothes).map(category =>
+                <option key={category} value={category}>
+                  {category}
                 </option>
               )}
+            </select>
+            <select
+              onChange={e => setSelectedCloth(e.target.value)}
+              value={selectedCloth}
+              className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+              disabled={!selectedCategory}
+            >
+              <option value="">Select Cloth Type</option>
+              {selectedCategory &&
+                categorizedClothes[selectedCategory].map(cloth =>
+                  <option key={cloth.id} value={cloth.type}>
+                    {cloth.type}
+                  </option>
+                )}
             </select>
             <input
               type="text"
@@ -116,10 +174,12 @@ const UserManager = () => {
               value={clothName}
               onChange={e => setClothName(e.target.value)}
               className="border p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+              disabled={!selectedCloth}
             />
             <button
               onClick={handleAddCloth}
               className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-900 transition"
+              disabled={!selectedCloth || !clothName}
             >
               Add Cloth
             </button>
@@ -137,7 +197,7 @@ const UserManager = () => {
                 className="p-2 bg-gray-100 rounded flex justify-between items-center"
               >
                 <span>
-                  {cloth.type} - {cloth.name}
+                  {cloth.name} - {cloth.type}
                 </span>
                 <button
                   onClick={() => handleDeleteCloth(cloth.id)}
