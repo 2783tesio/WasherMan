@@ -60,7 +60,7 @@ const Home = () => {
                                 onChange={() => handleCheckboxChange(cloth.id)}
                                 className="w-5 h-5"
                             />
-                            <span className="text-gray-800">{cloth.type} - {cloth.name}</span>
+                            <span className="text-gray-800">{cloth.name} - {cloth.type}</span>
                         </li>
                     ))}
                 </ul>
