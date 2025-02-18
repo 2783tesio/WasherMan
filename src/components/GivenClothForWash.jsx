@@ -29,7 +29,7 @@ const GivenClothForWash = () => {
                             <h3 className="font-medium text-gray-700">📅 Wash Date: {record.date}</h3>
                             <ul className="list-none pl-0 mt-2">
                                 {record.clothes.map((cloth) => (
-                                    <li key={cloth.id} className="text-gray-800">👕 {cloth.type} - {cloth.name}</li>
+                                    <li key={cloth.id} className="text-gray-800">👕 {cloth.type} - {cloth.name} - ({cloth.ClothCount})</li>
                                 ))}
                             </ul>
                             <button 

@@ -156,7 +156,6 @@ export const deleteGivenClothForWash = async (id) => {
 
 
 export const updateUserClothes = async (userId, updatedClothes) => {
-    debugger
     const db = await openDB();
     return new Promise((resolve, reject) => {
         const tx = db.transaction("users", "readwrite");
