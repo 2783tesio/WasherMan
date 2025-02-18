@@ -12,50 +12,8 @@ const UserManager = ({ clothesdetail }) => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCloth, setSelectedCloth] = useState(null);
   const [clothName, setClothName] = useState("");
-<<<<<<< HEAD
   const [categorizedClothes, setCategorizedClothes] = useState(clothesdetail);
   const [selectedSeeCategory, setSelectedSeeCategory] = useState('');
-=======
-  const [categorizedClothes, setCategorizedClothes] = useState({
-    Tops: [
-      { id: 1, type: "T-Shirt" },
-      { id: 2, type: "Shirt" },
-      { id: 3, type: "Sweater" },
-      { id: 4, type: "Hoodie" },
-      { id: 5, type: "Jacket" },
-      { id: 6, type: "Blazer" }
-    ],
-    Bottoms: [
-      { id: 7, type: "Jeans" },
-      { id: 8, type: "Shorts" },
-      { id: 9, type: "Trouser" },
-      { id: 10, type: "Pant" }
-    ],
-    Traditional: [
-      { id: 11, type: "Saree" },
-      { id: 12, type: "Kurta" },
-      { id: 13, type: "Lehenga" },
-      { id: 14, type: "Anarkali" },
-      { id: 15, type: "Kurti" }
-    ],
-    Accessories: [{ id: 18, type: "Scarf" }, { id: 47, type: "Towel" }],
-    Footwear: [
-      { id: 23, type: "Shoes" },
-      { id: 24, type: "Slippers" },
-      { id: 25, type: "Sandals" },
-      { id: 26, type: "Boots" }
-    ],
-    HomeLinen: [
-      { id: 48, type: "Bed Linen" },
-      { id: 51, type: "Cushion Cover" },
-      { id: 52, type: "Blanket" },
-      { id: 53, type: "Quilt" },
-      { id: 54, type: "Pillow" },
-      { id: 55, type: "Mattress" }
-    ]
-  });
-
->>>>>>> 9acb74c607d893cb3dd2965f75d6bd99e0ec50b4
 
   useEffect(() => {
     loadUser();
@@ -111,11 +69,7 @@ const UserManager = ({ clothesdetail }) => {
     loadUser();
   };
 
-<<<<<<< HEAD
   const handleAddCloth = async () => {
-=======
- const handleAddCloth = async () => {
->>>>>>> 9acb74c607d893cb3dd2965f75d6bd99e0ec50b4
     if (!user || !selectedCloth || !clothName.trim() || !selectedCategory) {
       alert("Please fill all fields!");
       return;
@@ -141,13 +95,6 @@ const UserManager = ({ clothesdetail }) => {
       userCloth: updatedClothes
     }));
   };
-<<<<<<< HEAD
-=======
-const handleCategoryChange = e => {
-    setSelectedCategory(e.target.value);
-    setSelectedCloth("");
-};
->>>>>>> 9acb74c607d893cb3dd2965f75d6bd99e0ec50b4
 
   const handleCategoryChange = e => {
     setSelectedCategory(e.target.value);
@@ -255,7 +202,6 @@ const handleCategoryChange = e => {
           </div>
 
           <ul className="mt-2 space-y-2">
-<<<<<<< HEAD
             {user.userCloth
               .filter(
                 cloth => !selectedSeeCategory || cloth.category === selectedSeeCategory
@@ -264,19 +210,6 @@ const handleCategoryChange = e => {
                 <li
                   key={cloth.id}
                   className="p-2 bg-gray-100 rounded flex justify-between items-center"
-=======
-            {user.userCloth.map(cloth =>
-              <li
-                key={cloth.id}
-                className="p-2 bg-gray-100 rounded flex justify-between items-center"
-              >
-                <span>
-                  {cloth.name} - {cloth.type}
-                </span>
-                <button
-                  onClick={() => handleDeleteCloth(cloth.id)}
-                  className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-700 transition"
->>>>>>> 9acb74c607d893cb3dd2965f75d6bd99e0ec50b4
                 >
                   <span>
                     {cloth.name} - {cloth.type}
