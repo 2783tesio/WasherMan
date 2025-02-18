@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { getUsers, addClothForWash } from "../utils/indexedDB";
 import { useNavigate } from "react-router-dom";
-import { Snackbar } from "@mui/material";
+import {
+ Snackbar
+} from "@mui/material";
 
 const Home = ({ clothesdetail }) => {
   const [clothes, setClothes] = useState([]);
@@ -25,6 +27,8 @@ const Home = ({ clothesdetail }) => {
     }
 
     setWashDate(new Date().toISOString().split("T")[0]);
+
+
   };
 
   const handleCheckboxChange = clothId => {
@@ -34,10 +38,6 @@ const Home = ({ clothesdetail }) => {
           ? prevSelected.filter(id => id !== clothId)
           : [...prevSelected, clothId]
     );
-    alert(`Clothes added to wash on ${washDate}!`);
-
-    setSelectedClothes([]);
-    setWashDate("");
   };
 
   const handleAddToWash = async () => {
@@ -61,6 +61,7 @@ const Home = ({ clothesdetail }) => {
     setSelectedClothes([]);
     //setWashDate("");
     setWashDate(new Date().toISOString().split("T")[0]);
+
   };
 
   const handleCategoryChange = category => {
@@ -89,6 +90,7 @@ const Home = ({ clothesdetail }) => {
     }
     handleClothCountChange(clothId, count + 1);
   };
+
   return (
     <div className="min-h-screen bg-gray-100 p-4 flex flex-col items-center bg-grey-400">
       <h2 className="text-2xl font-bold text-center text-blue-600">
@@ -180,7 +182,7 @@ const Home = ({ clothesdetail }) => {
           open={open}
           onClose={() => setOpen(false)}
           message="Clothes have been added to wash successfully!"
-          autoHideDuration={2000}
+          autoHideDuration={2000} 
         />}
     </div>
   );
