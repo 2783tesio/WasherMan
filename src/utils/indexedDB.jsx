@@ -1,5 +1,16 @@
 import { supabase } from "../lib/supabase";
 
+const ACTIVE_PROFILE_KEY = "washerman_active_profile";
+
+export function getActiveProfileId() {
+  return localStorage.getItem(ACTIVE_PROFILE_KEY);
+}
+
+export function setActiveProfileId(id) {
+  if (id) localStorage.setItem(ACTIVE_PROFILE_KEY, id);
+  else localStorage.removeItem(ACTIVE_PROFILE_KEY);
+}
+
 export async function addUser(userName, userCloth = []) {
   const { data: user, error } = await supabase
     .from("users")
@@ -19,20 +30,39 @@ export async function addUser(userName, userCloth = []) {
     const { error: clothError } = await supabase.from("clothes").insert(rows);
     if (clothError) throw clothError;
   }
+
+  setActiveProfileId(user.id);
   return user.id;
 }
 
 export async function getUsers() {
   const { data, error } = await supabase
     .from("users")
-    .select("id, user_name, clothes(*)")
+    .select("id, user_name, created_at, clothes(*)")
     .order("created_at", { ascending: true });
   if (error) throw error;
+
   return (data || []).map(user => ({
     id: user.id,
     userName: user.user_name,
     userCloth: (user.clothes || []).map(mapCloth)
   }));
+}
+
+export async function getUserById(userId) {
+  if (!userId) return null;
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, user_name, clothes(*)")
+    .eq("id", userId)
+    .single();
+  if (error) throw error;
+
+  return {
+    id: data.id,
+    userName: data.user_name,
+    userCloth: (data.clothes || []).map(mapCloth)
+  };
 }
 
 export async function addClothToUser(userId, clothItem) {
@@ -50,6 +80,7 @@ export async function addClothToUser(userId, clothItem) {
 export async function deleteUser(id) {
   const { error } = await supabase.from("users").delete().eq("id", id);
   if (error) throw error;
+  if (getActiveProfileId() === id) setActiveProfileId(null);
   return "User deleted successfully!";
 }
 
@@ -60,7 +91,7 @@ export async function updateUserClothes(userId, updatedClothes) {
     .eq("user_id", userId);
   if (fetchError) throw fetchError;
 
-  const keepIds = new Set(updatedClothes.filter(c => c.id && typeof c.id === "string").map(c => c.id));
+  const keepIds = new Set(updatedClothes.filter(c => typeof c.id === "string").map(c => c.id));
   const idsToDelete = (existing || []).map(c => c.id).filter(id => !keepIds.has(id));
 
   if (idsToDelete.length) {
@@ -69,39 +100,29 @@ export async function updateUserClothes(userId, updatedClothes) {
   }
 
   for (const cloth of updatedClothes) {
+    const payload = {
+      name: cloth.name,
+      type: cloth.type,
+      category: cloth.category,
+      cloth_count: cloth.ClothCount || 1
+    };
+
     if (typeof cloth.id === "string") {
-      const { error } = await supabase.from("clothes").update({
-        name: cloth.name,
-        type: cloth.type,
-        category: cloth.category,
-        cloth_count: cloth.ClothCount || 1
-      }).eq("id", cloth.id).eq("user_id", userId);
+      const { error } = await supabase.from("clothes").update(payload).eq("id", cloth.id).eq("user_id", userId);
       if (error) throw error;
     } else {
-      const { error } = await supabase.from("clothes").insert({
-        user_id: userId,
-        name: cloth.name,
-        type: cloth.type,
-        category: cloth.category,
-        cloth_count: cloth.ClothCount || 1
-      });
+      const { error } = await supabase.from("clothes").insert({ ...payload, user_id: userId });
       if (error) throw error;
     }
   }
 }
 
-export async function addClothForWash(washData) {
-  const { data: users, error: userError } = await supabase
-    .from("users")
-    .select("id")
-    .order("created_at", { ascending: true })
-    .limit(1);
-  if (userError) throw userError;
-  if (!users?.length) throw new Error("User not found. Create a profile first.");
+export async function addClothForWash(userId, washData) {
+  if (!userId) throw new Error("Please select a profile first.");
 
   const { data: batch, error: batchError } = await supabase
     .from("wash_batches")
-    .insert({ user_id: users[0].id, wash_date: washData.date })
+    .insert({ user_id: userId, wash_date: washData.date })
     .select("id")
     .single();
   if (batchError) throw batchError;
@@ -111,6 +132,7 @@ export async function addClothForWash(washData) {
     cloth_id: cloth.id,
     quantity: cloth.ClothCount || 1
   }));
+
   if (items.length) {
     const { error: itemError } = await supabase.from("wash_items").insert(items);
     if (itemError) throw itemError;
@@ -118,12 +140,16 @@ export async function addClothForWash(washData) {
   return "Added Successfully";
 }
 
-export async function getGivenClothesForWash() {
+export async function getGivenClothesForWash(userId) {
+  if (!userId) return [];
+
   const { data, error } = await supabase
     .from("wash_batches")
     .select("id, wash_date, wash_items(id, quantity, cloth_id, clothes(id, name, type, category, cloth_count))")
+    .eq("user_id", userId)
     .order("wash_date", { ascending: false });
   if (error) throw error;
+
   return (data || []).map(batch => ({
     id: batch.id,
     date: batch.wash_date,
@@ -137,8 +163,12 @@ export async function getGivenClothesForWash() {
   }));
 }
 
-export async function deleteGivenClothForWash(id) {
-  const { error } = await supabase.from("wash_batches").delete().eq("id", id);
+export async function deleteGivenClothForWash(id, userId) {
+  const { error } = await supabase
+    .from("wash_batches")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
   if (error) throw error;
 }
 
