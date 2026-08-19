@@ -12,7 +12,7 @@ const categoryIcons = {
 
 const UserManager = ({ clothesdetail }) => {
   const [authUser, setAuthUser] = useState(null);
-  const [profile, setProfile] = useState(null);
+  const [userRecord, setUserRecord] = useState(null);
   const [clothes, setClothes] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedCloth, setSelectedCloth] = useState("");
@@ -43,22 +43,14 @@ const UserManager = ({ clothesdetail }) => {
       if (authError) throw authError;
       if (!user) {
         setAuthUser(null);
-        setProfile(null);
+        setUserRecord(null);
         setClothes([]);
         return;
       }
 
       setAuthUser(user);
 
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, username")
-        .eq("id", user.id)
-        .single();
-
-      if (profileError) throw profileError;
-      setProfile(profileData);
-
+      // profiles has been removed. The application username now lives in users.user_name.
       const { data: washerUser, error: userError } = await supabase
         .from("users")
         .select("id, user_name")
@@ -66,6 +58,7 @@ const UserManager = ({ clothesdetail }) => {
         .single();
 
       if (userError) throw userError;
+      setUserRecord(washerUser);
 
       const { data: clothesData, error: clothesError } = await supabase
         .from("clothes")
@@ -93,13 +86,19 @@ const UserManager = ({ clothesdetail }) => {
     setError("");
 
     try {
-      const { data: washerUser, error: userError } = await supabase
-        .from("users")
-        .select("id")
-        .eq("auth_user_id", authUser.id)
-        .single();
+      let washerUser = userRecord;
 
-      if (userError) throw userError;
+      if (!washerUser) {
+        const { data, error: userError } = await supabase
+          .from("users")
+          .select("id, user_name")
+          .eq("auth_user_id", authUser.id)
+          .single();
+
+        if (userError) throw userError;
+        washerUser = data;
+        setUserRecord(data);
+      }
 
       const { error: insertError } = await supabase.from("clothes").insert({
         user_id: washerUser.id,
@@ -141,6 +140,8 @@ const UserManager = ({ clothesdetail }) => {
     [clothes, selectedSeeCategory]
   );
 
+  const username = userRecord?.user_name || authUser?.user_metadata?.username || authUser?.email?.split("@")[0] || "User";
+
   if (loading) {
     return <div className="rounded-3xl bg-white border border-slate-200 p-10 text-center text-slate-500">Loading your wardrobe...</div>;
   }
@@ -162,11 +163,11 @@ const UserManager = ({ clothesdetail }) => {
 
         <div className="mt-4 flex items-center gap-3 rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3">
           <div className="w-9 h-9 rounded-full bg-cyan-500 text-white flex items-center justify-center font-bold">
-            {(profile?.username || authUser?.email || "U").charAt(0).toUpperCase()}
+            {username.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
             <p className="text-xs text-slate-400">Signed in as</p>
-            <p className="text-sm font-semibold text-slate-800 truncate">{profile?.username || authUser?.email}</p>
+            <p className="text-sm font-semibold text-slate-800 truncate">{username}</p>
           </div>
         </div>
       </section>
