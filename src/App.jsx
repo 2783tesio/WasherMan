@@ -23,23 +23,26 @@ function Sidebar({ user, onLogout, darkMode, toggleDarkMode }) {
   );
 }
 
-function MobileNav({ user, darkMode, toggleDarkMode }) {
+function MobileNav({ user, onLogout, darkMode, toggleDarkMode }) {
   const location = useLocation();
+  const [accountOpen, setAccountOpen] = useState(false);
   const username = user?.user_metadata?.username || user?.email?.split("@")[0] || "U";
   const initial = username.charAt(0).toUpperCase();
+
   return (
     <nav className="md:hidden sticky top-0 z-50 w-full bg-white/90 dark:bg-slate-950/92 backdrop-blur-2xl border-b border-slate-200/80 dark:border-white/10 shadow-[0_2px_16px_rgba(15,23,42,0.08)] dark:shadow-black/20">
-      <div className="h-12 px-2 flex items-center gap-1.5 overflow-hidden">
-        <div title={username} className="shrink-0 h-9 w-9 rounded-xl bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs font-bold text-slate-700 dark:text-slate-200">{initial}</div>
+      <div className="h-12 px-2 flex items-center gap-1.5">
+        <button onClick={() => setAccountOpen(value => !value)} aria-label="Open account menu" className="relative shrink-0 h-9 w-9 rounded-xl bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 flex items-center justify-center text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/15 transition">{initial}</button>
         <div className="h-6 w-px bg-slate-200 dark:bg-white/10 shrink-0" />
-        <div className="flex-1 min-w-0 flex items-center gap-1 overflow-hidden">
+        <div className="flex-1 min-w-0 grid grid-cols-3 gap-1">
           {navItems.map(item => {
             const active = location.pathname === item.to;
-            return <Link key={item.to} to={item.to} aria-label={item.label} className={`min-w-0 flex-1 h-9 px-1.5 rounded-xl flex items-center justify-center gap-1 text-[11px] font-semibold whitespace-nowrap transition ${active ? "bg-cyan-500 text-white shadow-md shadow-cyan-500/20" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}><span className="text-sm leading-none">{item.icon}</span><span className="truncate">{item.shortLabel}</span></Link>;
+            return <Link key={item.to} to={item.to} aria-label={item.label} className={`min-w-0 h-9 px-1 rounded-xl flex items-center justify-center gap-1 text-[11px] font-semibold whitespace-nowrap transition ${active ? "bg-cyan-500 text-white shadow-md shadow-cyan-500/20" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}><span className="text-sm leading-none">{item.icon}</span><span className="truncate">{item.shortLabel}</span></Link>;
           })}
         </div>
         <button onClick={toggleDarkMode} aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"} className="shrink-0 h-9 w-9 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 flex items-center justify-center text-sm hover:bg-slate-100 dark:hover:bg-white/10 transition">{darkMode ? "☀️" : "🌙"}</button>
       </div>
+      {accountOpen && <div className="absolute left-2 top-14 z-[60] w-52 rounded-2xl border border-slate-200 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-xl p-3"><p className="text-[11px] text-slate-400">Signed in as</p><p className="mt-1 text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{username}</p><button onClick={onLogout} className="mt-3 w-full rounded-xl bg-red-50 dark:bg-red-500/10 px-3 py-2.5 text-left text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition">↪ Logout</button></div>}
     </nav>
   );
 }
@@ -59,7 +62,7 @@ function App() {
 
   const LoadCloth = { Tops: [{ id: 1, type: "T-Shirt" }, { id: 2, type: "Shirt" }, { id: 3, type: "Sweater" }, { id: 4, type: "Hoodie" }, { id: 5, type: "Jacket" }, { id: 6, type: "Blazer" }], Bottoms: [{ id: 7, type: "Jeans" }, { id: 8, type: "Shorts" }, { id: 9, type: "Trouser" }, { id: 10, type: "Pant" }], Traditional: [{ id: 11, type: "Saree" }, { id: 12, type: "Kurta" }, { id: 13, type: "Lehenga" }, { id: 14, type: "Anarkali" }, { id: 15, type: "Kurti" }], Accessories: [{ id: 18, type: "Scarf" }, { id: 47, type: "Towel" }], Footwear: [{ id: 23, type: "Shoes" }, { id: 24, type: "Slippers" }, { id: 25, type: "Sandals" }, { id: 26, type: "Boots" }], HomeLinen: [{ id: 48, type: "Bed Linen" }, { id: 51, type: "Cushion Cover" }, { id: 52, type: "Blanket" }, { id: 53, type: "Quilt" }, { id: 54, type: "Pillow" }, { id: 55, type: "Mattress" }] };
 
-  return <Router><div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300"><Sidebar user={session.user} onLogout={logout} darkMode={darkMode} toggleDarkMode={toggleDarkMode} /><main className="min-w-0 flex-1 bg-gradient-to-br from-slate-50 via-white to-cyan-50/40 dark:from-slate-950 dark:via-slate-900 dark:to-cyan-950/20 transition-colors duration-300"><MobileNav user={session.user} darkMode={darkMode} toggleDarkMode={toggleDarkMode} /><header className="hidden md:flex h-16 bg-white/55 dark:bg-slate-950/45 backdrop-blur-xl border-b border-slate-200/70 dark:border-white/10 items-center justify-between px-8 sticky top-0 z-30"><div><p className="text-xs text-slate-400">Laundry workspace</p><p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Manage your wardrobe with ease</p></div><div className="text-sm font-semibold text-slate-600 dark:text-slate-300">👤 {session.user?.user_metadata?.username || "User"}</div></header><div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto"><Routes><Route path="/" element={<Home clothesdetail={LoadCloth} />} /><Route path="/user-manager" element={<UserManager clothesdetail={LoadCloth} />} /><Route path="/wash" element={<GivenClothForWash />} /></Routes></div></main></div></Router>;
+  return <Router><div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300"><Sidebar user={session.user} onLogout={logout} darkMode={darkMode} toggleDarkMode={toggleDarkMode} /><main className="min-w-0 flex-1 bg-gradient-to-br from-slate-50 via-white to-cyan-50/40 dark:from-slate-950 dark:via-slate-900 dark:to-cyan-950/20 transition-colors duration-300"><MobileNav user={session.user} onLogout={logout} darkMode={darkMode} toggleDarkMode={toggleDarkMode} /><header className="hidden md:flex h-16 bg-white/55 dark:bg-slate-950/45 backdrop-blur-xl border-b border-slate-200/70 dark:border-white/10 items-center justify-between px-8 sticky top-0 z-30"><div><p className="text-xs text-slate-400">Laundry workspace</p><p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Manage your wardrobe with ease</p></div><div className="text-sm font-semibold text-slate-600 dark:text-slate-300">👤 {session.user?.user_metadata?.username || "User"}</div></header><div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto"><Routes><Route path="/" element={<Home clothesdetail={LoadCloth} />} /><Route path="/user-manager" element={<UserManager clothesdetail={LoadCloth} />} /><Route path="/wash" element={<GivenClothForWash />} /></Routes></div></main></div></Router>;
 }
 
 export default App;
