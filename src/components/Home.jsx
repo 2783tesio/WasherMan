@@ -42,7 +42,7 @@ const Home = ({ clothesdetail }) => {
   const totalItems = clothes.reduce((sum, cloth) => sum + (cloth.ClothCount || 0), 0);
 
   return (
-    <div className="space-y-7 pb-20 md:pb-0">
+    <div className="space-y-7 pb-24 md:pb-0">
       <section className="rounded-3xl bg-gradient-to-r from-cyan-600 to-blue-700 p-6 sm:p-8 text-white shadow-xl shadow-cyan-900/10">
         <div className="max-w-3xl">
           <p className="text-sm font-medium text-cyan-100">WELCOME TO WASHERMAN</p>
@@ -95,23 +95,18 @@ const Home = ({ clothesdetail }) => {
           </div>
         ) : <div className="p-10 text-center"><div className="text-4xl">👕</div><p className="mt-3 font-semibold text-slate-700">No clothes added yet</p><p className="text-sm text-slate-500 mt-1">Add your first clothing item from My Clothes.</p><button onClick={() => navigate("/user-manager")} className="mt-4 rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-700">Add clothes</button></div>}
 
-        <div className="hidden md:block p-5 sm:p-6 bg-slate-50 border-t border-slate-100">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div><p className="text-sm font-semibold text-slate-800">Wash date</p><p className="text-xs text-slate-500">When should these clothes be washed?</p></div>
-            <div className="flex flex-col sm:flex-row gap-3"><input type="date" value={washDate} onChange={e => setWashDate(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-cyan-200" /><button onClick={handleAddToWash} className="rounded-xl bg-slate-900 px-5 py-2.5 font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50" disabled={!selectedClothes.length}>🧺 Add to wash</button></div>
+        <div className="fixed left-3 right-3 bottom-3 z-40 md:static md:mx-0 md:mt-0 md:border-t md:border-slate-100 md:bg-slate-50">
+          <div className="mx-auto max-w-xl rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-[0_8px_30px_rgba(15,23,42,0.14)] md:max-w-none md:rounded-none md:border-0 md:bg-slate-50 md:px-5 md:py-5 md:shadow-none">
+            <div className="flex items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-slate-500">Wash date</p>
+                <input type="date" value={washDate} onChange={e => setWashDate(e.target.value)} className="mt-1 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-medium text-slate-800 outline-none focus:ring-0" />
+              </div>
+              <button onClick={handleAddToWash} disabled={!selectedClothes.length} className="shrink-0 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-45">🧺 Add</button>
+            </div>
           </div>
         </div>
       </section>
-
-      <div className="md:hidden fixed bottom-4 right-4 z-40 w-[min(300px,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-xl shadow-slate-900/15 backdrop-blur">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold text-slate-700">Wash date</p>
-            <input type="date" value={washDate} onChange={e => setWashDate(e.target.value)} className="mt-1 w-full min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-cyan-200" />
-          </div>
-          <button onClick={handleAddToWash} disabled={!selectedClothes.length} className="mt-4 shrink-0 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40">🧺 Add</button>
-        </div>
-      </div>
 
       <Snackbar anchorOrigin={{ vertical: "top", horizontal: "center" }} open={open} onClose={() => setOpen(false)} message="Clothes added to wash successfully!" autoHideDuration={2000} />
     </div>
