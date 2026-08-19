@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { HashRouter as Router, Routes, Route, Link } from "react-router-dom";
 import UserManager from "./components/UserManager";
 import Home from "./components/Home";
 import GivenClothForWash from "./components/GivenClothForWash";
