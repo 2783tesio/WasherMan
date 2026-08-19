@@ -13,6 +13,12 @@ const navItems = [
   { to: "/wash", label: "Laundry History", shortLabel: "History", icon: "🧺" }
 ];
 
+function isRecoveryUrl() {
+  const query = new URLSearchParams(window.location.search);
+  const hash = window.location.hash;
+  return query.get("recovery") === "1" || hash.includes("type=recovery") || hash.includes("access_token=");
+}
+
 function Sidebar({ user, onLogout, darkMode, toggleDarkMode }) {
   const location = useLocation();
   return (
@@ -36,18 +42,27 @@ function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("washerman-theme") === "dark");
-  const [recoveryMode, setRecoveryMode] = useState(() => new URLSearchParams(window.location.search).get("recovery") === "1");
+  const [recoveryMode, setRecoveryMode] = useState(() => isRecoveryUrl());
 
   useEffect(() => { document.documentElement.classList.toggle("dark", darkMode); localStorage.setItem("washerman-theme", darkMode ? "dark" : "light"); }, [darkMode]);
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => { setSession(data.session); setLoading(false); });
-    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => { setSession(nextSession); if (event === "PASSWORD_RECOVERY") setRecoveryMode(true); });
+    let recovery = isRecoveryUrl();
+    supabase.auth.getSession().then(({ data }) => { setSession(data.session); if (recovery || data.session) setLoading(false); else setLoading(false); });
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      setSession(nextSession);
+      if (event === "PASSWORD_RECOVERY") setRecoveryMode(true);
+    });
     return () => listener.subscription.unsubscribe();
   }, []);
 
   const logout = async () => { await supabase.auth.signOut(); };
   const toggleDarkMode = () => setDarkMode(value => !value);
-  const finishRecovery = async () => { await supabase.auth.signOut(); window.history.replaceState({}, "", window.location.pathname); setRecoveryMode(false); setSession(null); };
+  const finishRecovery = async () => {
+    await supabase.auth.signOut();
+    window.history.replaceState({}, "", window.location.pathname);
+    setRecoveryMode(false);
+    setSession(null);
+  };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">Loading...</div>;
   if (recoveryMode) return session ? <ResetPassword onComplete={finishRecovery} /> : <Auth onAuthenticated={(user) => setSession({ user })} />;
