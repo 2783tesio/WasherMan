@@ -69,11 +69,7 @@ const Home = ({ clothesdetail }) => {
       <div className="relative space-y-5 sm:space-y-6">
         <section className={`${glass} rounded-[2rem] p-5 sm:p-7 lg:p-8`}>
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 rounded-full bg-cyan-500/10 border border-cyan-400/20 px-3 py-1 text-xs font-semibold text-cyan-700"><span className="h-2 w-2 rounded-full bg-cyan-500" /> WASHERMAN DASHBOARD</div>
-              <h2 className="mt-4 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">Ready for a fresh wardrobe?</h2>
-              <p className="mt-2 text-sm sm:text-base text-slate-500 max-w-xl">Select the clothes you want to wash, choose a date, and keep your laundry organized.</p>
-            </div>
+            <div className="max-w-3xl"><div className="inline-flex items-center gap-2 rounded-full bg-cyan-500/10 border border-cyan-400/20 px-3 py-1 text-xs font-semibold text-cyan-700"><span className="h-2 w-2 rounded-full bg-cyan-500" /> WASHERMAN DASHBOARD</div><h2 className="mt-4 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">Ready for a fresh wardrobe?</h2><p className="mt-2 text-sm sm:text-base text-slate-500 max-w-xl">Select the clothes you want to wash, choose a date, and keep your laundry organized.</p></div>
             <div className="shrink-0 rounded-2xl bg-white/45 backdrop-blur-lg border border-white/70 p-3 min-w-48 shadow-sm"><p className="text-xs text-slate-400">Signed in as</p><p className="mt-1 text-base font-bold text-slate-800">👤 {username}</p></div>
           </div>
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">{[['User', username], ['Clothing types', clothes.length], ['Total pieces', totalItems], ['Selected', selectedClothes.length]].map(([label, value]) => <div key={label} className="rounded-2xl bg-white/45 backdrop-blur-lg border border-white/70 px-4 py-3 shadow-sm"><p className="text-[11px] font-medium text-slate-400">{label}</p><p className="mt-1 text-lg font-bold text-slate-800 truncate">{value}</p></div>)}</div>
@@ -87,17 +83,19 @@ const Home = ({ clothesdetail }) => {
           <div className="p-5 sm:p-6 border-b border-white/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/20"><div><h3 className="text-xl font-bold text-slate-900">Choose clothes for wash</h3><p className="text-sm text-slate-500 mt-1">Select items and adjust their quantity for {username}.</p></div><select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="rounded-xl border border-white/80 bg-white/55 backdrop-blur px-3 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-cyan-200"><option value="">All categories</option>{categories.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
 
           {loading ? <div className="p-10 text-center text-slate-500">Loading your clothes...</div> : clothes.length > 0 ? <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">{clothes.filter(c => !selectedCategory || c.category === selectedCategory).map(cloth => { const selected = selectedClothes.includes(cloth.id); return <div key={cloth.id} className={`rounded-2xl border p-4 backdrop-blur-lg transition ${selected ? "border-cyan-400 bg-cyan-400/10 shadow-md" : "border-white/70 bg-white/35 hover:bg-white/55 hover:shadow-md"}`}><div className="flex items-start gap-3"><input type="checkbox" checked={selected} onChange={() => handleCheckboxChange(cloth.id)} className="mt-1 h-5 w-5 accent-cyan-600" /><div className="min-w-0 flex-1"><p className="font-semibold text-slate-800 truncate">{cloth.name}</p><p className="text-sm text-slate-500">{cloth.type}</p></div><span className="text-lg">{categoryIcons[cloth.category] || "👕"}</span></div><div className="mt-4 flex items-center justify-between rounded-xl bg-white/45 border border-white/70 p-2"><span className="text-xs font-medium text-slate-500">Quantity</span><div className="flex items-center gap-3"><button onClick={() => changeCount(cloth.id, cloth.cloth_count || 1, -1)} className="h-8 w-8 rounded-lg bg-white/65 border border-white/80 text-slate-600 hover:bg-white">−</button><span className="w-5 text-center font-semibold text-slate-800">{cloth.cloth_count || 1}</span><button onClick={() => changeCount(cloth.id, cloth.cloth_count || 1, 1)} className="h-8 w-8 rounded-lg bg-cyan-500/90 text-white hover:bg-cyan-600">+</button></div></div></div>; })}</div> : <div className="p-10 text-center"><div className="text-4xl">👕</div><p className="mt-3 font-semibold text-slate-700">No clothes added yet</p><p className="text-sm text-slate-500 mt-1">Add clothing items from My Clothes.</p><button onClick={() => navigate("/user-manager")} className="mt-4 rounded-xl bg-slate-900/90 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">Go to My Clothes</button></div>}
-
-          <div className="fixed left-1/2 bottom-3 z-50 w-[calc(100%-1.5rem)] max-w-md -translate-x-1/2 md:static md:w-auto md:max-w-none md:translate-x-0 md:border-t md:border-white/70 md:bg-white/20">
-            <div className="rounded-2xl border border-white/90 bg-white/80 backdrop-blur-2xl px-3 py-2.5 shadow-[0_14px_45px_rgba(15,23,42,0.22)] md:rounded-none md:border-0 md:bg-transparent md:px-5 md:py-5 md:shadow-none">
-              <div className="flex items-center gap-3">
-                <div className="min-w-0 flex-1"><p className="text-[11px] font-medium text-slate-500">Wash date</p><input type="date" value={washDate} onChange={e => setWashDate(e.target.value)} className="mt-0.5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold text-slate-800 outline-none focus:ring-0" /></div>
-                <button onClick={handleAddToWash} disabled={!authUser || !selectedClothes.length} className="shrink-0 rounded-xl bg-slate-900/95 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-45">🧺 Add</button>
-              </div>
-            </div>
-          </div>
         </section>
       </div>
+
+      {/* Mobile-only floating action bar. It is fixed to the viewport, independent of the content cards. */}
+      <div className="fixed left-3 right-3 bottom-3 z-50 md:hidden pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto max-w-md rounded-2xl border border-white/80 bg-white/90 backdrop-blur-2xl px-3 py-2.5 shadow-[0_14px_45px_rgba(15,23,42,0.22)] dark:border-white/10 dark:bg-slate-900/90">
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1"><p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Wash date</p><input type="date" value={washDate} onChange={e => setWashDate(e.target.value)} className="mt-0.5 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold text-slate-800 dark:text-slate-100 outline-none focus:ring-0" /></div>
+            <button onClick={handleAddToWash} disabled={!authUser || !selectedClothes.length} className="shrink-0 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-45">🧺 Add</button>
+          </div>
+        </div>
+      </div>
+
       <Snackbar anchorOrigin={{ vertical: "top", horizontal: "center" }} open={open} onClose={() => setOpen(false)} message="Clothes added to wash successfully!" autoHideDuration={2000} />
     </div>
   );
