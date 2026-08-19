@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 
+// Supabase Auth validates the internal email address even though the user only sees a username.
+// Use a reserved, syntactically valid domain instead of the previous .local address.
+const toAuthEmail = (username) => `${username}@washerman.example.com`;
+
 export default function Auth({ onAuthenticated }) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [username, setUsername] = useState("");
@@ -13,15 +17,18 @@ export default function Auth({ onAuthenticated }) {
     setMessage("");
 
     const cleanUsername = username.trim().toLowerCase();
-    if (!cleanUsername || password.length < 6) {
-      setMessage("Enter a username and a password of at least 6 characters.");
+    if (!/^[a-z0-9._-]{3,30}$/.test(cleanUsername)) {
+      setMessage("Username must be 3-30 characters: letters, numbers, ., _ or -.");
+      return;
+    }
+    if (password.length < 6) {
+      setMessage("Password must be at least 6 characters.");
       return;
     }
 
     setLoading(true);
     try {
-      // Supabase Auth uses email/password internally. The user only sees a username.
-      const internalEmail = `${cleanUsername}@users.washer-man.local`;
+      const internalEmail = toAuthEmail(cleanUsername);
 
       if (isSignUp) {
         const { data, error } = await supabase.auth.signUp({
@@ -30,8 +37,11 @@ export default function Auth({ onAuthenticated }) {
           options: { data: { username: cleanUsername } },
         });
         if (error) throw error;
-        if (data.session) onAuthenticated(data.session.user);
-        else setMessage("Account created. You can now log in.");
+        if (data.session) {
+          onAuthenticated(data.session.user);
+        } else {
+          setMessage("Account created. Please log in.");
+        }
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: internalEmail,
@@ -68,7 +78,7 @@ export default function Auth({ onAuthenticated }) {
 
           {message && <p className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">{message}</p>}
 
-          <button disabled={loading} className="w-full rounded-xl bg-cyan-500 text-white font-semibold py-3 hover:bg-cyan-600 disabled:opacity-60">
+          <button type="submit" disabled={loading} className="w-full rounded-xl bg-cyan-500 text-white font-semibold py-3 hover:bg-cyan-600 disabled:opacity-60">
             {loading ? "Please wait..." : isSignUp ? "Create account" : "Login"}
           </button>
         </form>
