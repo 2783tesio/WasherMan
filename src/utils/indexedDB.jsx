@@ -1,204 +1,153 @@
-// src/utils/indexedDB.js
+import { supabase } from "../lib/supabase";
 
-const DB_NAME = "WasherManDB";
-const DB_VERSION = 2; // 🔹 Increase version to trigger upgrade
-const STORE_NAME = "users";
-const WASH_STORE = "GivenClothforWash"; // 🔹 New store
-
-// Open IndexedDB
-export function openDB() {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-        request.onupgradeneeded = (event) => {
-            const db = event.target.result;
-
-            // ✅ Create 'users' store if not exists
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                db.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
-            }
-
-            // ✅ Create 'GivenClothforWash' store if not exists
-            if (!db.objectStoreNames.contains(WASH_STORE)) {
-                db.createObjectStore(WASH_STORE, { keyPath: "id", autoIncrement: true });
-            }
-        };
-
-        request.onsuccess = (event) => {
-            console.log("Database opened successfully");
-            resolve(event.target.result);
-        };
-        request.onerror = (event) => {
-            console.error("Database opening error:", event.target.error);
-            reject(event.target.error);
-        };
-    });
-}
-// Add user object with clothes
 export async function addUser(userName, userCloth = []) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction(STORE_NAME, "readwrite");
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.add({ userName, userCloth });
+  const { data: user, error } = await supabase
+    .from("users")
+    .insert({ user_name: userName })
+    .select("id, user_name")
+    .single();
+  if (error) throw error;
 
-        request.onsuccess = () => resolve("User added successfully!");
-        request.onerror = (event) => reject(event.target.error);
-    });
+  if (userCloth.length) {
+    const rows = userCloth.map(cloth => ({
+      user_id: user.id,
+      name: cloth.name,
+      type: cloth.type,
+      category: cloth.category,
+      cloth_count: cloth.ClothCount || 1
+    }));
+    const { error: clothError } = await supabase.from("clothes").insert(rows);
+    if (clothError) throw clothError;
+  }
+  return user.id;
 }
 
-// Get all users
 export async function getUsers() {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction(STORE_NAME, "readonly");
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.getAll();
-
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = (event) => reject(event.target.error);
-    });
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, user_name, clothes(*)")
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data || []).map(user => ({
+    id: user.id,
+    userName: user.user_name,
+    userCloth: (user.clothes || []).map(mapCloth)
+  }));
 }
 
-// Add clothes to a specific user
 export async function addClothToUser(userId, clothItem) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction(STORE_NAME, "readwrite");
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.get(userId);
-
-        request.onsuccess = () => {
-            const user = request.result;
-            if (user) {
-                user.userCloth.push(clothItem);
-                const updateRequest = store.put(user);
-                updateRequest.onsuccess = () => resolve("Cloth added successfully!");
-                updateRequest.onerror = (event) => reject(event.target.error);
-            } else {
-                reject("User not found!");
-            }
-        };
-        request.onerror = (event) => reject(event.target.error);
-    });
+  const { error } = await supabase.from("clothes").insert({
+    user_id: userId,
+    name: clothItem.name,
+    type: clothItem.type,
+    category: clothItem.category,
+    cloth_count: clothItem.ClothCount || 1
+  });
+  if (error) throw error;
+  return "Cloth added successfully!";
 }
 
-// Delete a user
 export async function deleteUser(id) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction(STORE_NAME, "readwrite");
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.delete(id);
-
-        request.onsuccess = () => resolve("User deleted successfully!");
-        request.onerror = (event) => reject(event.target.error);
-    });
+  const { error } = await supabase.from("users").delete().eq("id", id);
+  if (error) throw error;
+  return "User deleted successfully!";
 }
 
-export const addClothForWash = async (washData) => {
-    const db = await openDB(); // Ensure DB is opened properly
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction(WASH_STORE, "readwrite");
-        const store = transaction.objectStore(WASH_STORE);
+export async function updateUserClothes(userId, updatedClothes) {
+  const { data: existing, error: fetchError } = await supabase
+    .from("clothes")
+    .select("id")
+    .eq("user_id", userId);
+  if (fetchError) throw fetchError;
 
-        const request = store.add(washData);
+  const keepIds = new Set(updatedClothes.filter(c => c.id && typeof c.id === "string").map(c => c.id));
+  const idsToDelete = (existing || []).map(c => c.id).filter(id => !keepIds.has(id));
 
-        request.onsuccess = () => {
-            console.log("✅ Clothes added for wash:", washData);
-            resolve("Added Successfully");
-        };
+  if (idsToDelete.length) {
+    const { error } = await supabase.from("clothes").delete().in("id", idsToDelete);
+    if (error) throw error;
+  }
 
-        request.onerror = (error) => {
-            console.error("❌ Error adding clothes for wash:", error);
-            reject(error);
-        };
-    });
-};
+  for (const cloth of updatedClothes) {
+    if (typeof cloth.id === "string") {
+      const { error } = await supabase.from("clothes").update({
+        name: cloth.name,
+        type: cloth.type,
+        category: cloth.category,
+        cloth_count: cloth.ClothCount || 1
+      }).eq("id", cloth.id).eq("user_id", userId);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase.from("clothes").insert({
+        user_id: userId,
+        name: cloth.name,
+        type: cloth.type,
+        category: cloth.category,
+        cloth_count: cloth.ClothCount || 1
+      });
+      if (error) throw error;
+    }
+  }
+}
 
-export const getGivenClothesForWash = async () => {
-    const db = await openDB(); // ✅ Use openDB
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction("GivenClothforWash", "readonly");
-        const store = transaction.objectStore("GivenClothforWash");
+export async function addClothForWash(washData) {
+  const { data: users, error: userError } = await supabase
+    .from("users")
+    .select("id")
+    .order("created_at", { ascending: true })
+    .limit(1);
+  if (userError) throw userError;
+  if (!users?.length) throw new Error("User not found. Create a profile first.");
 
-        const request = store.getAll();
+  const { data: batch, error: batchError } = await supabase
+    .from("wash_batches")
+    .insert({ user_id: users[0].id, wash_date: washData.date })
+    .select("id")
+    .single();
+  if (batchError) throw batchError;
 
-        request.onsuccess = () => {
-            resolve(request.result);
-        };
+  const items = (washData.clothes || []).map(cloth => ({
+    wash_batch_id: batch.id,
+    cloth_id: cloth.id,
+    quantity: cloth.ClothCount || 1
+  }));
+  if (items.length) {
+    const { error: itemError } = await supabase.from("wash_items").insert(items);
+    if (itemError) throw itemError;
+  }
+  return "Added Successfully";
+}
 
-        request.onerror = (error) => {
-            reject(error);
-        };
-    });
-};
+export async function getGivenClothesForWash() {
+  const { data, error } = await supabase
+    .from("wash_batches")
+    .select("id, wash_date, wash_items(id, quantity, cloth_id, clothes(id, name, type, category, cloth_count))")
+    .order("wash_date", { ascending: false });
+  if (error) throw error;
+  return (data || []).map(batch => ({
+    id: batch.id,
+    date: batch.wash_date,
+    clothes: (batch.wash_items || []).map(item => ({
+      id: item.clothes?.id || item.cloth_id,
+      name: item.clothes?.name || "Cloth",
+      type: item.clothes?.type || "",
+      category: item.clothes?.category || "",
+      ClothCount: item.quantity
+    }))
+  }));
+}
 
+export async function deleteGivenClothForWash(id) {
+  const { error } = await supabase.from("wash_batches").delete().eq("id", id);
+  if (error) throw error;
+}
 
-export const deleteGivenClothForWash = async (id) => {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction("GivenClothforWash", "readwrite");
-        const store = transaction.objectStore("GivenClothforWash");
-        const request = store.delete(id);
-
-        request.onsuccess = () => {
-            console.log(`✅ Record with ID ${id} deleted`);
-            resolve();
-        };
-
-        request.onerror = (event) => {
-            console.error("❌ Error deleting record:", event.target.error);
-            reject(event.target.error);
-        };
-    });
-};
-
-
-export const updateUserClothes = async (userId, updatedClothes) => {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-        const tx = db.transaction("users", "readwrite");
-        const store = tx.objectStore("users");
-
-        const request = store.get(userId);
-
-        request.onsuccess = () => {
-            const user = request.result;
-            if (user) {
-                const updatedUser = {
-                    id: user.id,
-                    userName: user.userName,
-                    userCloth: updatedClothes
-                };
-
-                const updateRequest = store.put(updatedUser);
-
-                updateRequest.onsuccess = () => {
-                    console.log("✅ User clothes updated successfully!");
-                    resolve();
-                };
-
-                updateRequest.onerror = (event) => {
-                    console.error("❌ Error updating user:", event.target.error);
-                    reject(event.target.error);
-                };
-            } else {
-                console.error("❌ User not found for ID:", userId);
-                reject("User not found!");
-            }
-        };
-
-        request.onerror = (event) => {
-            console.error("❌ Error fetching user:", event.target.error);
-            reject(event.target.error);
-        };
-    });
-};
-
-
-
-
-
-
-
+function mapCloth(cloth) {
+  return {
+    id: cloth.id,
+    name: cloth.name,
+    type: cloth.type,
+    category: cloth.category,
+    ClothCount: cloth.cloth_count || 1
+  };
+}
